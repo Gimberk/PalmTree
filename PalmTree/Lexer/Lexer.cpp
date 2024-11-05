@@ -1,4 +1,5 @@
 #include "Lexer.h"
+#include <iostream>
 
 std::vector<Token> Lexer::tokenize(const std::string& code)
 {
@@ -13,27 +14,40 @@ std::vector<Token> Lexer::tokenize(const std::string& code)
 			tokens.push_back({ TokenType::Operator, "+", static_cast<int>(pos) });
 			pos++;
 		}
+		else if (curr == '=') {
+			tokens.push_back({ TokenType::Operator, "=", static_cast<int>(pos) });
+			pos++;
+		}
+		else if (curr == ';') {
+			tokens.push_back({ TokenType::Delimiter, ";", static_cast<int>(pos) });
+			pos++;
+		}
+		else if (curr == '(') {
+			tokens.push_back({ TokenType::Delimiter, "(", static_cast<int>(pos) });
+			pos++;
+		}
+		else if (curr == ')') {
+			tokens.push_back({ TokenType::Delimiter, ")", static_cast<int>(pos) });
+			pos++;
+		}
 		else pos++;
 	}
 
-	tokens.push_back({ TokenType::EndOfFile, "" });
+	tokens.push_back({ TokenType::EndOfFile, "EOF" });
 	return tokens;
 }
 
 Token Lexer::readNumber(size_t& pos, const std::string& code)
 {
 	std::string number;
-	while (pos < code.length() && ((std::isdigit(code[pos]) || code[pos] == '.')))
-		number += code[pos];
+	while (pos < code.length() && ((std::isdigit(code[pos]) || code[pos] == '.'))) number += code[pos++];
 	return { TokenType::Number, number, static_cast<int>(pos) };
 }
 
 Token Lexer::readIdentifierKeyword(size_t& pos, const std::string& code)
 {
 	std::string identifier;
-	while (pos < code.length() && std::isalnum(code[pos])) {
-		identifier += code[pos++];
-	}
+	while (pos < code.length() && std::isalnum(code[pos])) identifier += code[pos++];
 
 	// for now, list all keywords here
 	if (identifier == "let") return { TokenType::Keyword, "let" };
