@@ -145,11 +145,14 @@
   <ItemGroup>
     <ClCompile Include="Lexer\Lexer.cpp" />
     <ClCompile Include="PalmTree.cpp" />
+    <ClCompile Include="Parser\Parser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer\Lexer.h" />
     <ClInclude Include="PalmTree.h" />
     <ClInclude Include="Lexer\Token.h" />
+    <ClInclude Include="Parser\Parser.h" />
+    <ClInclude Include="Parser\AST.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
