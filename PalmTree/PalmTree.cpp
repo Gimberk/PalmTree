@@ -4,5 +4,5 @@
 int main()
 {
     std::cout << "Hello World!\n";
-    std::getchar();
+    (void)std::getchar();
 }
