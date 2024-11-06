@@ -10,6 +10,10 @@ std::vector<Token> Lexer::tokenize(const std::string& code)
 		const char curr = code[pos];
 		if (std::isdigit(curr)) tokens.push_back(readNumber(pos, code));
 		else if (std::isalpha(curr)) tokens.push_back(readIdentifierKeyword(pos, code));
+		else if (curr == '%') {
+			tokens.push_back({ TokenType::Operator, "%", static_cast<int>(pos) });
+			pos++;
+		}
 		else if (curr == '+') {
 			tokens.push_back({ TokenType::Operator, "+", static_cast<int>(pos) });
 			pos++;

@@ -8,12 +8,12 @@
  =======================================================
     ------------------- WARNING ---------------------
  =======================================================
-                I hate Abstract Syntax Trees
+                i hate Abstract Syntax Trees
 */
 
 int main()
 {
-    std::string code = "let x = 4 + 2 * 2 / 3 + 3;\nlet y = x * 2;\nprint(x + y / 2);";
+    std::string code = "let x = 5%4;\nprint(x*100);";
     std::vector<Token> tokens = Lexer::tokenize(code);
 
     for (auto& token : tokens) std::cout << token.toString() << '\n';

@@ -30,10 +30,12 @@ public:
     }
 };
 
+// parent class for expressions of all types
 struct ExpressionNode : public ASTNode {
     virtual int evaluate(const std::unordered_map<std::string, int>& variables) const = 0;
 };
 
+// number literals like 5
 struct NumberNode : public ExpressionNode {
     int value;
 
@@ -52,6 +54,7 @@ struct NumberNode : public ExpressionNode {
     }
 };
 
+// for identifiers like print(x); (x is considered a variable-node)
 struct VariableNode : public ExpressionNode {
     std::string name;
     VariableNode(const std::string& name) : name(name) {}
@@ -69,11 +72,12 @@ struct VariableNode : public ExpressionNode {
         /* Doesn't do anything right now */
     }
 
-    std::string to_string(int indent = 0) const override  {
+    std::string to_string(int indent = 0) const override {
         return std::string(indent, ' ') + "IDENTIFIER (" + name + ")";
     }
 };
 
+// an expression representing 3*2 (or something of the like)
 struct BinaryOperationNode : public ExpressionNode {
     std::unique_ptr<ExpressionNode> left;
     std::unique_ptr<ExpressionNode> right;
@@ -87,10 +91,11 @@ struct BinaryOperationNode : public ExpressionNode {
         int rightVal = right->evaluate(variables);
 
         switch (operation) {
-        case '+': return leftVal + rightVal;
-        case '-': return leftVal - rightVal;
+        case '%': return leftVal % rightVal;
         case '*': return leftVal * rightVal;
         case '/': return rightVal != 0 ? leftVal / rightVal : throw std::runtime_error("Division by zero");
+        case '+': return leftVal + rightVal;
+        case '-': return leftVal - rightVal;
         default: throw std::runtime_error("Unsupported operation");
         }
     }
@@ -100,11 +105,12 @@ struct BinaryOperationNode : public ExpressionNode {
     }
 
     std::string to_string(int indent = 0) const override {
-        return std::string(indent, ' ') + "BIN-EXPR: (" + left->to_string() + " " + 
+        return std::string(indent, ' ') + "BIN-EXPR: (" + left->to_string() + " " +
             operation + " " + right->to_string() + ")";
     }
 };
 
+// for expressions like let x = 54;
 struct VariableDeclarationNode : public ASTNode {
     std::string name;
     std::unique_ptr<ExpressionNode> expression;
@@ -117,18 +123,19 @@ struct VariableDeclarationNode : public ASTNode {
     }
 
     std::string to_string(int indent = 0) const override {
-        return std::string(indent, ' ') + "Variable Declaration: " + name + 
+        return std::string(indent, ' ') + "Variable Declaration: " + name +
             " = (" + expression->to_string() + ")";
     }
 };
 
-// PrintNode represents `print(x)` or other expressions to print
+// PrintNode represents `print(x)`
 struct PrintNode : public ASTNode {
     std::unique_ptr<ExpressionNode> expression;
 
     PrintNode(std::unique_ptr<ExpressionNode> expr)
         : expression(std::move(expr)) {}
 
+    // this is where we define what the print function actually DOES
     void visit(std::unordered_map<std::string, int>& variables) const override {
         std::cout << expression->evaluate(variables) << std::endl;
     }
