@@ -28,6 +28,9 @@ private:
 
 	std::unique_ptr<ExpressionNode> parseExpression();
 	std::unique_ptr<ExpressionNode> parseTerm();
+	std::unique_ptr<ExpressionNode> parseAdditionSubtraction();
+	std::unique_ptr<ExpressionNode> parseMultiplicationDivision();
+	std::unique_ptr<ExpressionNode> parsePrimary();
 private:
 	std::unique_ptr<VariableDeclarationNode> parseVariableDeclaration();
 private:
