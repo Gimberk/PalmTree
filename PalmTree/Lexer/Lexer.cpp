@@ -14,6 +14,18 @@ std::vector<Token> Lexer::tokenize(const std::string& code)
 			tokens.push_back({ TokenType::Operator, "+", static_cast<int>(pos) });
 			pos++;
 		}
+		else if (curr == '-') {
+			tokens.push_back({ TokenType::Operator, "-", static_cast<int>(pos) });
+			pos++;
+		}
+		else if (curr == '/') {
+			tokens.push_back({ TokenType::Operator, "/", static_cast<int>(pos) });
+			pos++;
+		}
+		else if (curr == '*') {
+			tokens.push_back({ TokenType::Operator, "*", static_cast<int>(pos) });
+			pos++;
+		}
 		else if (curr == '=') {
 			tokens.push_back({ TokenType::Operator, "=", static_cast<int>(pos) });
 			pos++;

@@ -2,91 +2,116 @@
 
 #include <stdexcept>
 
-bool Parser::expect(const TokenType type, const std::string value) {
-    return (tokens[current].type == type && tokens[current].value == value);
+//
+// HELPER METHODS
+//
+
+const Token& Parser::expect(TokenType type) {
+    if (isAtEnd() /* || tokens[current].type != type*/) {
+        std::cout << (tokens[current].type != type);
+        std::cout << "\nExpected " + tokens[current].tokenTypeToString(type) + " but got " + tokens[current].tokenTypeToString(type) + "\n";
+        throw std::runtime_error("Expected " + tokens[current].tokenTypeToString(type) + " but got " + tokens[current].tokenTypeToString(type));
+    }
+    return tokens[current++];
 }
 
-bool Parser::expect(const TokenType type) {
-    return tokens[current].type == type;
+const Token& Parser::expect(TokenType type, const std::string& value) {
+    if (isAtEnd() || tokens[current].type != type || tokens[current].value != value) {
+        throw std::runtime_error("Unexpected token or value");
+    }
+    return tokens[current++];
 }
 
-std::vector<std::unique_ptr<ASTNode>> Parser::parse() {
-    std::vector<std::unique_ptr<ASTNode>> nodes;
+bool Parser::isAtEnd() const {
+    return current >= tokens.size() || tokens[current].type == TokenType::EndOfFile;
+}
 
-    while (current < tokens.size() && tokens[current].type != TokenType::EndOfFile) {
-        if (tokens[current].type == TokenType::Keyword && tokens[current].value == "let") {
-            nodes.push_back(parseVariableDeclaration());
+bool Parser::match(TokenType type) {
+    if (!isAtEnd() && tokens[current].type == type) {
+        advance();
+        return true;
+    }
+    return false;
+}
+
+bool Parser::match(TokenType type, std::string value) {
+    if (!isAtEnd() && tokens[current].type == type && tokens[current].value == value) {
+        advance();
+        return true;
+    }
+    return false;
+}
+
+void Parser::advance() {
+    if (!isAtEnd()) current++;
+}
+
+Token Parser::previous() {
+    if (current <= 0) throw std::runtime_error("Invalid operation");
+    return tokens[current - 1];
+}
+
+//
+// PARSER
+//
+
+std::unique_ptr<ProgramNode> Parser::parse() {
+    std::vector<std::unique_ptr<ASTNode>> statements;
+    while (!isAtEnd()) {
+        if (match(TokenType::Keyword, std::string("let"))) {
+            statements.push_back(parseVariableDeclaration());
         }
-        else if (tokens[current].type == TokenType::Keyword && tokens[current].value == "print") {
-            nodes.push_back(parsePrintStatement());
+        else if (match(TokenType::Keyword, std::string("print"))) {
+            statements.push_back(parsePrintStatement());
         }
         else {
-            throw std::runtime_error("Unexpected token");
+            throw std::runtime_error("Unexpected statement type.");
         }
     }
 
-    return nodes;
+    return std::make_unique<ProgramNode>(std::move(statements));
 }
 
-std::unique_ptr<ASTNode> Parser::parseVariableDeclaration() {
-    current++;  // skip "let"
+std::unique_ptr<ExpressionNode> Parser::parseTerm() {
+    if (match(TokenType::Number)) return std::make_unique<NumberNode>(std::stoi(previous().value));
+    else if (match(TokenType::Identifier)) return std::make_unique<VariableNode>(previous().value);
 
-    if (tokens[current].type != TokenType::Identifier) {
-        throw std::runtime_error("Expected variable name after 'let'");
-    }
-
-    std::string varName = tokens[current].value;
-    current++;  // move to '='
-
-    if (tokens[current].type != TokenType::Operator || tokens[current].value != "=") {
-        throw std::runtime_error("Expected '=' in variable declaration");
-    }
-
-    current++;  // move to the value
-
-    if (tokens[current].type != TokenType::Number) {
-        throw std::runtime_error("Expected a number after '='");
-    }
-
-    int value = std::stoi(tokens[current].value);
-    current++;  // move past the value
-
-    if (tokens[current].type != TokenType::Delimiter || tokens[current].value != ";") {
-        throw std::runtime_error("Expected ';' at the end of variable declaration");
-    }
-
-    current++;  // move past ';'
-
-    return std::make_unique<VariableDeclarationNode>(varName, value);
+    throw std::runtime_error("Expected a term (number or identifier)");
 }
 
-std::unique_ptr<ASTNode> Parser::parsePrintStatement() {
-    current++;  // skip "print"
+std::unique_ptr<ExpressionNode> Parser::parseExpression() {
+    std::unique_ptr<ExpressionNode> left = parseTerm();
 
-    if (tokens[current].type != TokenType::Delimiter || tokens[current].value != "(") {
-        throw std::runtime_error("Expected '(' after 'print'");
+    while (match(TokenType::Operator)) {
+        char op = previous().value[0];  // Assumes single character operators like '+', '-', etc.
+        std::unique_ptr<ExpressionNode> right = parseTerm();
+        left = std::make_unique<BinaryOperationNode>(std::move(left), op, std::move(right));
     }
 
-    current++;  // move to the variable name
+    return left;
+}
 
-    if (tokens[current].type != TokenType::Identifier) {
-        throw std::runtime_error("Expected variable name in print statement");
-    }
+std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration() {
+    //expect(TokenType::Keyword);  // 'let' keyword
+    std::string varName = expect(TokenType::Identifier).value;
+    expect(TokenType::Operator);  // '=' operator
 
-    std::string varName = tokens[current].value;
-    current++;  // move to ')'
+    // Parse the initializer expression
+    std::unique_ptr<ExpressionNode> initializer = parseExpression();
 
-    if (tokens[current].type != TokenType::Delimiter || tokens[current].value != ")") {
-        throw std::runtime_error("Expected ')' after variable name");
-    }
+    expect(TokenType::Delimiter, ";");  // ';' at the end of the declaration
+    return std::make_unique<VariableDeclarationNode>(varName, std::move(initializer));
+}
 
-    current++;  // move to ';'
+std::unique_ptr<PrintNode> Parser::parsePrintStatement() {
+    //expect(TokenType::Keyword);  // 'print' keyword
+    expect(TokenType::Delimiter, "(");  // '(' symbol
 
-    if (tokens[current].type != TokenType::Delimiter || tokens[current].value != ";") {
-        throw std::runtime_error("Expected ';' at the end of print statement");
-    }
+    // Parse the argument expression for print
+    std::unique_ptr<ExpressionNode> argument = parseExpression();
 
-    current++;  // move past ';'
+    expect(TokenType::Delimiter, ")");  // ')' symbol
+    expect(TokenType::Delimiter, ";");  // ';' symbol at the end of the statement
 
-    return std::make_unique<PrintNode>(varName);
+    return std::make_unique<PrintNode>(std::move(argument));
 }

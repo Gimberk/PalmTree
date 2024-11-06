@@ -151,6 +151,7 @@
     <ClInclude Include="Lexer\Lexer.h" />
     <ClInclude Include="PalmTree.h" />
     <ClInclude Include="Lexer\Token.h" />
+    <ClInclude Include="Parser\Interpreter.h" />
     <ClInclude Include="Parser\Parser.h" />
     <ClInclude Include="Parser\AST.h" />
   </ItemGroup>
