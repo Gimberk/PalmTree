@@ -17,7 +17,13 @@ private:
 	size_t current;
 private:
 	bool isAtEnd() const;
+
 	bool match(TokenType type);
+	bool check(TokenType type) const;
+	bool checkNext(TokenType type) const;
+
+	bool check(TokenType type, std::string value) const;
+	bool checkNext(TokenType type, std::string value) const;
 	bool match(TokenType type, std::string value);
 
 	void advance();
@@ -32,7 +38,7 @@ private:
 	std::unique_ptr<ExpressionNode> parseMultiplicationDivision();
 	std::unique_ptr<ExpressionNode> parsePrimary();
 private:
+	std::unique_ptr<ASTNode> parseFunctionOrExpression();
 	std::unique_ptr<VariableDeclarationNode> parseVariableDeclaration();
-private:
-	std::unique_ptr<PrintNode> parsePrintStatement();
+	std::unique_ptr<ASTNode> parseFunctionCall();
 };

@@ -5,11 +5,14 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <functional>
 #include <stdexcept>
 
 struct ASTNode {
     virtual std::string to_string(int indent = 0) const = 0;  // for debug purposes to visualize the AST
-    virtual void visit(std::unordered_map<std::string, int>& variables) const = 0;
+    virtual void visit(std::unordered_map<std::string, int>& variables,
+                        const std::unordered_map<std::string,
+                        std::function<void(const std::vector<int>&)>>&builtInFunctions) const = 0;
     virtual ~ASTNode() = default;
 };
 
@@ -19,10 +22,10 @@ public:
 
     ProgramNode(std::vector<std::unique_ptr<ASTNode>> stmts) : statements(std::move(stmts)) {}
 
-    void visit(std::unordered_map<std::string, int>& variables) const override {
-        for (const auto& stmt : statements) {
-            stmt->visit(variables);
-        }
+    void visit(std::unordered_map<std::string, int>& variables,
+                const std::unordered_map<std::string,
+                std::function<void(const std::vector<int>&)>>&builtInFunctions) const override {
+        for (const auto& stmt : statements) stmt->visit(variables, builtInFunctions);
     }
 
     std::string to_string(int indent = 0) const override {
@@ -45,7 +48,9 @@ struct NumberNode : public ExpressionNode {
         return value;
     }
 
-    void visit(std::unordered_map<std::string, int>& variables) const override {
+    void visit(std::unordered_map<std::string, int>& variables,
+                const std::unordered_map<std::string,
+                std::function<void(const std::vector<int>&)>>&builtInFunctions) const override {
         /* Doesn't do anything right now */
     }
 
@@ -68,7 +73,9 @@ struct VariableNode : public ExpressionNode {
         }
     }
 
-    void visit(std::unordered_map<std::string, int>& variables) const override {
+    void visit(std::unordered_map<std::string, int>& variables,
+                const std::unordered_map<std::string,
+                std::function<void(const std::vector<int>&)>>&builtInFunctions) const override {
         /* Doesn't do anything right now */
     }
 
@@ -100,7 +107,9 @@ struct BinaryOperationNode : public ExpressionNode {
         }
     }
 
-    void visit(std::unordered_map<std::string, int>& variables) const override {
+    void visit(std::unordered_map<std::string, int>& variables,
+                const std::unordered_map<std::string,
+                std::function<void(const std::vector<int>&)>>&builtInFunctions) const override {
         /* Doesn't do anything right now */
     }
 
@@ -118,7 +127,9 @@ struct VariableDeclarationNode : public ASTNode {
     VariableDeclarationNode(const std::string& name, std::unique_ptr<ExpressionNode> expr)
         : name(name), expression(std::move(expr)) {}
 
-    void visit(std::unordered_map<std::string, int>& variables) const override {
+    void visit(std::unordered_map<std::string, int>& variables,
+                const std::unordered_map<std::string,
+                std::function<void(const std::vector<int>&)>>&builtInFunctions) const override {
         variables[name] = expression->evaluate(variables);
     }
 
@@ -128,19 +139,32 @@ struct VariableDeclarationNode : public ASTNode {
     }
 };
 
-// PrintNode represents `print(x)`
-struct PrintNode : public ASTNode {
-    std::unique_ptr<ExpressionNode> expression;
+// all function calls for both built-in and user-defined functions
+struct FunctionCallNode : public ASTNode {
+    std::string functionName;
+    std::vector<std::unique_ptr<ExpressionNode>> arguments;
 
-    PrintNode(std::unique_ptr<ExpressionNode> expr)
-        : expression(std::move(expr)) {}
+    FunctionCallNode(const std::string& name, std::vector<std::unique_ptr<ExpressionNode>> args)
+        : functionName(name), arguments(std::move(args)) {}
 
-    // this is where we define what the print function actually DOES
-    void visit(std::unordered_map<std::string, int>& variables) const override {
-        std::cout << expression->evaluate(variables) << std::endl;
+    void visit(std::unordered_map<std::string, int>& variables,
+        const std::unordered_map<std::string, 
+        std::function<void(const std::vector<int>&)>>& builtInFunctions) const override {
+        std::vector<int> evaluatedArgs;
+        for (const std::unique_ptr<ExpressionNode>& arg : arguments) 
+            evaluatedArgs.push_back(arg->evaluate(variables));
+
+        auto func = builtInFunctions.find(functionName);
+        if (func != builtInFunctions.end()) func->second(evaluatedArgs);
+        else throw std::runtime_error("Unknown function: " + functionName);
     }
 
     std::string to_string(int indent = 0) const override {
-        return std::string(indent, ' ') + "PrintNode: (" + expression->to_string() + ")";
+        std::string str = std::string(indent, ' ') + "FunctionCall: " + functionName + "(";
+        for (const auto& arg : arguments) str += arg->to_string() + ", ";
+        str.pop_back();
+        str.pop_back();
+        str += ")";
+        return str;
     }
 };

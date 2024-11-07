@@ -1,9 +1,12 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
 enum class TokenType { 
-	Keyword, Identifier, Operator, Number, String, Delimiter, EndOfFile
+	Keyword, Identifier, Operator, Number, String, Delimiter, EndOfFile,
+
+	LetKeyword
 };
 
 struct Token {
@@ -25,12 +28,14 @@ struct Token {
 			return "String";
 		case TokenType::Delimiter:
 			return "Delimiter";
+		case TokenType::LetKeyword:
+			return "Let";
 		default:
 			return "End Of File";
 		}
 	}
 
-	std::string toString() const {
+	std::string to_string() const {
 		return "{type: \"" + tokenTypeToString(type) + "\", value: \"" + value + "\"},";
 	}
 };

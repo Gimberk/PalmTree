@@ -1,6 +1,24 @@
 #include "Lexer.h"
 #include <iostream>
 
+const std::unordered_map<std::string, TokenType> Lexer::KEYWORDS = {
+	{ "let", TokenType::LetKeyword }
+};
+
+/*
+temporary way of defining all built-in functions 
+(it's not great for more complex functions, but it works for print) ;-) :|
+*/
+const std::unordered_map<std::string, 
+	std::function<void(const std::vector<int>&)>> Lexer::BUILT_IN_FUNCTIONS = {
+	{	"print", [](const std::vector<int>& args) {
+			for (int arg : args) std::cout << arg << " ";
+			std::cout << std::endl;
+		}
+	}
+};
+
+
 std::vector<Token> Lexer::tokenize(const std::string& code)
 {
 	std::vector<Token> tokens;
@@ -66,8 +84,8 @@ Token Lexer::readIdentifierKeyword(size_t& pos, const std::string& code)
 	while (pos < code.length() && std::isalnum(code[pos])) identifier += code[pos++];
 
 	// for now, list all keywords here
-	if (identifier == "let") return { TokenType::Keyword, "let" };
-	else if (identifier == "print") return { TokenType::Keyword, "print" };
+	if (Lexer::KEYWORDS.find(identifier) != Lexer::KEYWORDS.end())
+		return Token{ Lexer::KEYWORDS.at(identifier), identifier };
 
 	// if it doesn't match a key word, it's an identifier.
 	return { TokenType::Identifier, identifier };

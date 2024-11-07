@@ -6,6 +6,25 @@
 // HELPER METHODS
 //
 
+bool Parser::check(TokenType type, std::string value) const {
+    return !isAtEnd() && tokens[current].type == type && tokens[current].value == value;
+}
+
+bool Parser::check(TokenType type) const {
+    return !isAtEnd() && tokens[current].type == type;
+}
+
+bool Parser::checkNext(TokenType type) const {
+    return !isAtEnd() && current + 1 < tokens.size() && tokens[current + 1].type == type;
+}
+
+bool Parser::checkNext(TokenType type, std::string value) const {
+    return !isAtEnd() 
+            && current + 1 < tokens.size() 
+            && tokens[current + 1].type == type 
+            && tokens[current+1].value == value;
+}
+
 const Token& Parser::expect(TokenType type) {
     if (isAtEnd()  || tokens[current].type != type) {
         std::cout << (tokens[current].type != type);
@@ -63,18 +82,19 @@ Token Parser::previous() {
 std::unique_ptr<ProgramNode> Parser::parse() {
     std::vector<std::unique_ptr<ASTNode>> statements;
     while (!isAtEnd()) {
-        if (match(TokenType::Keyword, std::string("let"))) {
+        if (match(TokenType::LetKeyword)) 
             statements.push_back(parseVariableDeclaration());
-        }
-        else if (match(TokenType::Keyword, std::string("print"))) {
-            statements.push_back(parsePrintStatement());
-        }
-        else {
-            throw std::runtime_error("Unexpected statement type.");
-        }
+        else if (match(TokenType::Identifier)) 
+            statements.push_back(parseFunctionOrExpression());
+        else throw std::runtime_error("Unexpected token");
     }
 
     return std::make_unique<ProgramNode>(std::move(statements));
+}
+
+std::unique_ptr<ASTNode> Parser::parseFunctionOrExpression() {
+    if (check(TokenType::Delimiter, "(")) return parseFunctionCall();
+    else return parseExpression();
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseTerm() {
@@ -138,21 +158,26 @@ std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration() {
     std::string varName = expect(TokenType::Identifier).value;
     expect(TokenType::Operator);  // '=' operator
 
-    // Parse the initializer expression
     std::unique_ptr<ExpressionNode> initializer = parseExpression();
 
     expect(TokenType::Delimiter, ";");
     return std::make_unique<VariableDeclarationNode>(varName, std::move(initializer));
 }
 
-std::unique_ptr<PrintNode> Parser::parsePrintStatement() {
+std::unique_ptr<ASTNode> Parser::parseFunctionCall() {
+    std::string functionName = previous().value;
     expect(TokenType::Delimiter, "(");
 
-    // Parse the argument expression for print
-    std::unique_ptr<ExpressionNode> argument = parseExpression();
+    std::vector<std::unique_ptr<ExpressionNode>> arguments;
+
+    if (!check(TokenType::Delimiter, ")")) {
+        do {
+            arguments.push_back(parseExpression());
+        } while (match(TokenType::Delimiter, ","));
+    }
 
     expect(TokenType::Delimiter, ")");
     expect(TokenType::Delimiter, ";");
 
-    return std::make_unique<PrintNode>(std::move(argument));
+    return std::make_unique<FunctionCallNode>(functionName, std::move(arguments));
 }
