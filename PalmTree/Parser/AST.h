@@ -9,6 +9,7 @@
 #include <memory>
 #include <functional>
 #include <stdexcept>
+#include <optional>
 
 struct ASTNode {
     virtual std::string to_string(int indent = 0) const = 0;  // for debug purposes to visualize the AST
@@ -124,29 +125,58 @@ struct BinaryOperationNode : public ExpressionNode {
     }
 };
 
-// for expressions like let x = 54;
-struct VariableDeclarationNode : public ASTNode {
+struct AssignmentNode : public ASTNode {
     std::string name;
     std::unique_ptr<ExpressionNode> expression;
 
-    VariableDeclarationNode(const std::string& name, std::unique_ptr<ExpressionNode> expr)
+    AssignmentNode(const std::string& name, std::unique_ptr<ExpressionNode> expr)
         : name(name), expression(std::move(expr)) {}
 
     void visit(std::unordered_map<std::string, Value>& variables,
-                const std::unordered_map<std::string,
-                std::function<void(const std::vector<Value>&)>>&builtInFunctions) const override {
-        Value value = expression->evaluate(variables);
-        auto [it, inserted] = variables.emplace(name, value);
-        if (!inserted) { // variable already exists
-            it->second = value;
+        const std::unordered_map<std::string, 
+        std::function<void(const std::vector<Value>&)>>& builtInFunctions) const override {
+        if (variables.find(name) == variables.end()) 
+            throw std::runtime_error("Variable '" + name + "' is not declared!");
+        if (!variables[name].isMutable()) 
+            throw std::runtime_error("Variable '" + name + "' is immutable!");
+        variables[name] = expression->evaluate(variables);
+    }
+
+    std::string to_string(int indent = 0) const override {
+        return std::string(indent, ' ') + "Assignment: " + name + " = (" + expression->to_string() + ")";
+    }
+};
+
+
+// for expressions like let x = 54;
+struct VariableDeclarationNode : public ASTNode {
+    std::string name;
+    bool mut;
+    std::optional<std::unique_ptr<ExpressionNode>> expression; // Optional initializer
+
+    VariableDeclarationNode(const std::string& name, std::optional<std::unique_ptr<ExpressionNode>> expr, bool mut)
+        : name(name), expression(std::move(expr)), mut(mut) {}
+
+    void visit(std::unordered_map<std::string, Value>& variables,
+        const std::unordered_map<std::string, std::function<void(const std::vector<Value>&)>>& builtInFunctions) const override {
+        if (expression) {
+            Value value = (*expression)->evaluate(variables);
+            value.setMutable(mut);
+            variables[name] = std::move(value);
+        }
+        else {
+            Value v; v.setMutable(mut);
+            variables[name] = v;
         }
     }
 
     std::string to_string(int indent = 0) const override {
-        return std::string(indent, ' ') + "Variable Declaration: " + name +
-            " = (" + expression->to_string() + ")";
+        std::string result = std::string(indent, ' ') + "Variable Declaration: " + name;
+        if (expression) result += " = (" + (*expression)->to_string() + ")";
+        return result;
     }
 };
+
 
 // all function calls for both built-in and user-defined functions
 struct FunctionCallNode : public ASTNode {

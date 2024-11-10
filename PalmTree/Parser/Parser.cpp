@@ -82,15 +82,18 @@ Token Parser::previous() {
 std::unique_ptr<ProgramNode> Parser::parse() {
     std::vector<std::unique_ptr<ASTNode>> statements;
     while (!isAtEnd()) {
-        if (match(TokenType::LetKeyword)) 
+        if (match(TokenType::LetKeyword, "let"))
             statements.push_back(parseVariableDeclaration());
-        else if (match(TokenType::Identifier)) 
+        else if (check(TokenType::Identifier) && checkNext(TokenType::Operator, "="))
+            statements.push_back(parseAssignment());
+        else if (match(TokenType::Identifier))
             statements.push_back(parseFunctionOrExpression());
         else throw std::runtime_error("Unexpected token");
     }
-
     return std::make_unique<ProgramNode>(std::move(statements));
 }
+
+
 
 std::unique_ptr<ASTNode> Parser::parseFunctionOrExpression() {
     if (check(TokenType::Delimiter, "(")) return parseFunctionCall();
@@ -159,13 +162,14 @@ std::unique_ptr<ExpressionNode> Parser::parsePrimary() {
 }
 
 std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration() {
-    std::string varName = expect(TokenType::Identifier).value;
-    expect(TokenType::Operator, "=");
+    const std::string varName = expect(TokenType::Identifier).value;
+    const bool mut = match(TokenType::MutableKeyword);
 
-    std::unique_ptr<ExpressionNode> initializer = parseExpression();
-
+    std::optional<std::unique_ptr<ExpressionNode>> initializer;
+    if (match(TokenType::Operator, "=")) initializer = parseExpression();
     expect(TokenType::Delimiter, ";");
-    return std::make_unique<VariableDeclarationNode>(varName, std::move(initializer));
+
+    return std::make_unique<VariableDeclarationNode>(varName, std::move(initializer), mut);
 }
 
 std::unique_ptr<ASTNode> Parser::parseFunctionCall() {
@@ -184,4 +188,12 @@ std::unique_ptr<ASTNode> Parser::parseFunctionCall() {
     expect(TokenType::Delimiter, ";");
 
     return std::make_unique<FunctionCallNode>(functionName, std::move(arguments));
+}
+
+std::unique_ptr<AssignmentNode> Parser::parseAssignment() {
+    std::string name = expect(TokenType::Identifier).value;
+    expect(TokenType::Operator, "=");
+    std::unique_ptr<ExpressionNode> expression = parseExpression();
+    expect(TokenType::Delimiter, ";");
+    return std::make_unique<AssignmentNode>(name, std::move(expression));
 }

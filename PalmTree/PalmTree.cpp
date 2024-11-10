@@ -13,7 +13,7 @@
 
 int main()
 {
-    std::string code = "let x1 = 1;\nprint(x1, 5);";
+    std::string code = "let x1 mut;print(x1);\nx1=4;print(x1);";
     std::vector<Token> tokens = Lexer::tokenize(code);
 
     for (auto& token : tokens) std::cout << token.to_string() << '\n';

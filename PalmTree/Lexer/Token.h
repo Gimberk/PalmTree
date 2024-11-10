@@ -8,7 +8,7 @@ enum class TokenType {
 
 	Int, Double, String,
 
-	LetKeyword
+	LetKeyword, MutableKeyword
 };
 
 struct Token {
@@ -18,6 +18,8 @@ struct Token {
 
 	std::string tokenTypeToString(const TokenType type_m) const {
 		switch (type_m) {
+		case TokenType::MutableKeyword:
+			return "Keyword";
 		case TokenType::Keyword:
 			return "Keyword";
 		case TokenType::Identifier:

@@ -40,5 +40,6 @@ private:
 private:
 	std::unique_ptr<ASTNode> parseFunctionOrExpression();
 	std::unique_ptr<VariableDeclarationNode> parseVariableDeclaration();
+	std::unique_ptr<AssignmentNode> parseAssignment();
 	std::unique_ptr<ASTNode> parseFunctionCall();
 };

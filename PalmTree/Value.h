@@ -10,11 +10,11 @@ class Value {
 public:
     using VariantType = std::variant<int, double, std::string, bool>;
 public:
-    Value() { throw new std::runtime_error("Type required!"); }
-    Value(int v) : value(v) {}
-    Value(double v) : value(v) {}
-    Value(const std::string& v) : value(v) {}
-    Value(bool v) : value(v) {}
+    Value() { }
+    Value(int v) : value(v), mut(false) {}
+    Value(double v) : value(v), mut(false) {}
+    Value(const std::string& v) : value(v), mut(false) {}
+    Value(bool v) : value(v), mut(false) {}
 
     const VariantType& get() const { return value; }
 public:
@@ -40,8 +40,12 @@ public:
     bool isString() const { return std::holds_alternative<std::string>(value); }
     bool isBool() const { return std::holds_alternative<bool>(value); }
 
+    void setMutable(const bool mut) { this->mut = mut; }
+    bool isMutable() const { return mut; }
+
     int decimalCount() const;
     std::string to_string() const;
 private:
     VariantType value;
+    bool mut;
 };

@@ -3,7 +3,7 @@
 #include <iomanip>
 
 const std::unordered_map<std::string, TokenType> Lexer::KEYWORDS = {
-	{ "let", TokenType::LetKeyword }
+	{ "let", TokenType::LetKeyword }, { "mut", TokenType::MutableKeyword }
 };
 
 /*
