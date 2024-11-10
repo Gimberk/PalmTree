@@ -4,7 +4,9 @@
 #include <unordered_map>
 
 enum class TokenType { 
-	Keyword, Identifier, Operator, Number, String, Delimiter, EndOfFile,
+	Keyword, Identifier, Operator, Delimiter, EndOfFile,
+
+	Int, Double, String,
 
 	LetKeyword
 };
@@ -22,14 +24,16 @@ struct Token {
 			return "Identifier";
 		case TokenType::Operator:
 			return "Operator";
-		case TokenType::Number:
-			return "Number";
-		case TokenType::String:
-			return "String";
 		case TokenType::Delimiter:
 			return "Delimiter";
 		case TokenType::LetKeyword:
-			return "Let";
+			return "Keyword";
+		case TokenType::Int:
+			return "Integer";
+		case TokenType::Double:
+			return "Double";
+		case TokenType::String:
+			return "String";
 		default:
 			return "End Of File";
 		}

@@ -98,8 +98,10 @@ std::unique_ptr<ASTNode> Parser::parseFunctionOrExpression() {
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseTerm() {
-    if (match(TokenType::Number)) 
+    if (match(TokenType::Int)) 
         return std::make_unique<NumberNode>(std::stoi(previous().value));
+    else if (match(TokenType::Double))
+        return std::make_unique<NumberNode>(std::stod(previous().value));
     else if (match(TokenType::Identifier)) 
         return std::make_unique<VariableNode>(previous().value);
 
@@ -142,8 +144,10 @@ std::unique_ptr<ExpressionNode> Parser::parseMultiplicationDivision() {
 }
 
 std::unique_ptr<ExpressionNode> Parser::parsePrimary() {
-    if (match(TokenType::Number)) 
+    if (match(TokenType::Int))
         return std::make_unique<NumberNode>(std::stoi(previous().value));
+    else if (match(TokenType::Double))
+        return std::make_unique<NumberNode>(std::stod(previous().value));
     else if (match(TokenType::Identifier)) 
         return std::make_unique<VariableNode>(previous().value);
     else if (match(TokenType::Delimiter) && previous().value == "(") {
@@ -156,7 +160,7 @@ std::unique_ptr<ExpressionNode> Parser::parsePrimary() {
 
 std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration() {
     std::string varName = expect(TokenType::Identifier).value;
-    expect(TokenType::Operator);  // '=' operator
+    expect(TokenType::Operator, "=");
 
     std::unique_ptr<ExpressionNode> initializer = parseExpression();
 
