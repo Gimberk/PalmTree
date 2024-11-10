@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Lexer/Value.h"
+#include "../Value.h"
 
 #include <string>
 #include <unordered_map>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../PalmTree.h"
-#include "Value.h"
+#include "Token.h"
+#include "../Value.h"
 
 #include <functional>
 #include <vector>

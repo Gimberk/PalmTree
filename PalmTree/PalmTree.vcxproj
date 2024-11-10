@@ -148,13 +148,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Lexer\Lexer.cpp" />
+    <ClCompile Include="Value.cpp" />
     <ClCompile Include="PalmTree.cpp" />
     <ClCompile Include="Parser\Parser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer\Lexer.h" />
-    <ClInclude Include="Lexer\Value.h" />
-    <ClInclude Include="PalmTree.h" />
+    <ClInclude Include="Value.h" />
     <ClInclude Include="Lexer\Token.h" />
     <ClInclude Include="Parser\Interpreter.h" />
     <ClInclude Include="Parser\Parser.h" />
