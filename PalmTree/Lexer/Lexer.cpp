@@ -26,6 +26,16 @@ const std::unordered_map<std::string,
 	}},
 	{ "PI", [](const std::vector<Value>&) {
 		return Value(3.14159265358979323846);
+	}},
+	{ "double", [](const std::vector<Value>& args) {
+		if (args.size() != 1 || !args[0].isNumeric()) 
+			throw std::runtime_error("double expects a single numeric argument");
+		return args[0].isInt() ? Value{args[0].asInt() * 2} : Value{args[0].asDouble() * 2};
+	}},
+	{ "increment", [](const std::vector<Value>& args) {
+		if (args.size() != 1 || !args[0].isNumeric()) 
+			throw std::runtime_error("increment expects a single numeric argument");
+		return args[0].isInt() ? Value{args[0].asInt() + 1} : Value{args[0].asDouble() + 1};
 	}}
 };
 
@@ -38,6 +48,10 @@ std::vector<Token> Lexer::tokenize(const std::string& code)
 		const char curr = code[pos];
 		if (std::isdigit(curr)) tokens.push_back(readNumber(pos, code));
 		else if (std::isalpha(curr)) tokens.push_back(readIdentifierKeyword(pos, code));
+		else if (pos != code.length()-1 && (curr == '|' && code[pos + 1] == '>')) {
+			tokens.push_back({ TokenType::Operator, "|>", static_cast<int>(pos) });
+			pos += 2;
+		}
 		else if (curr == ',') {
 			tokens.push_back({ TokenType::Delimiter, ",", static_cast<int>(pos) });
 			pos++;

@@ -116,7 +116,26 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm() {
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseExpression() {
-    return parseAdditionSubtraction();
+    if (checkNext(TokenType::Operator, "|>")) {
+        std::unique_ptr<ExpressionNode> left = parsePrimary();
+        while (match(TokenType::Operator, "|>")) {
+            if (!check(TokenType::Identifier)) 
+                throw std::runtime_error("Expected function name after '|>' operator");
+            std::string functionName = expect(TokenType::Identifier).value;
+            std::vector<std::unique_ptr<ExpressionNode>> arguments;
+            arguments.push_back(std::move(left));
+
+            if (match(TokenType::Delimiter, "(")) {
+                do {
+                    arguments.push_back(parseExpression());
+                } while (match(TokenType::Delimiter, ","));
+                expect(TokenType::Delimiter, ")");
+            }
+            left = std::make_unique<FunctionCallNode>(functionName, std::move(arguments));
+        }
+        return left;
+    }
+    else return parseAdditionSubtraction();
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseAdditionSubtraction() {
@@ -137,7 +156,7 @@ std::unique_ptr<ExpressionNode> Parser::parseMultiplicationDivision() {
     std::unique_ptr<ExpressionNode> left = parsePrimary();
 
     bool isOp = match(TokenType::Operator), 
-               isMulOrDiv = previous().value == "*" || previous().value == "/";
+         isMulOrDiv = previous().value == "*" || previous().value == "/";
     while (isOp && isMulOrDiv) {
         char op = previous().value[0];
         std::unique_ptr<ExpressionNode> right = parsePrimary();

@@ -13,7 +13,7 @@
 
 int main()
 {
-    std::string code = "let x1 = PI();\n";
+    std::string code = "let x mut = 5 |> double |> increment;\nprint(x);";
     std::vector<Token> tokens = Lexer::tokenize(code);
 
     for (auto& token : tokens) std::cout << token.to_string() << '\n';

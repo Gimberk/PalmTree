@@ -40,6 +40,9 @@ public:
     bool isString() const { return std::holds_alternative<std::string>(value); }
     bool isBool() const { return std::holds_alternative<bool>(value); }
     bool isNull() const { return std::holds_alternative<std::monostate>(value); }
+    bool isNumeric() const { 
+        return std::holds_alternative<int>(value) || std::holds_alternative<double>(value); 
+    }
 
     void setMutable(const bool mut) { this->mut = mut; }
     bool isMutable() const { return mut; }
