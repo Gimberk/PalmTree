@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Token.h"
-#include "../Value.h"
+#include "../Types/Token.h"
+#include "../Types/Value.h"
 
 #include <functional>
 #include <vector>
@@ -11,7 +11,7 @@ class Lexer
 public:
 	const static std::unordered_map<std::string, TokenType> KEYWORDS;
 	const static std::unordered_map<std::string,
-		std::function<void(const std::vector<Value>&)>> BUILT_IN_FUNCTIONS;
+		std::function<Value(const std::vector<Value>&)>> BUILT_IN_FUNCTIONS;
 public:
 	static std::vector<Token> tokenize(const std::string& code);
 private:

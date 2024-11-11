@@ -8,9 +8,9 @@
 
 class Value {
 public:
-    using VariantType = std::variant<int, double, std::string, bool>;
+    using VariantType = std::variant<std::monostate, int, double, std::string, bool>;
 public:
-    Value() { }
+    Value() : mut(false) { }
     Value(int v) : value(v), mut(false) {}
     Value(double v) : value(v), mut(false) {}
     Value(const std::string& v) : value(v), mut(false) {}
@@ -39,6 +39,7 @@ public:
     bool isDouble() const { return std::holds_alternative<double>(value); }
     bool isString() const { return std::holds_alternative<std::string>(value); }
     bool isBool() const { return std::holds_alternative<bool>(value); }
+    bool isNull() const { return std::holds_alternative<std::monostate>(value); }
 
     void setMutable(const bool mut) { this->mut = mut; }
     bool isMutable() const { return mut; }

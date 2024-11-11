@@ -82,7 +82,7 @@ Token Parser::previous() {
 std::unique_ptr<ProgramNode> Parser::parse() {
     std::vector<std::unique_ptr<ASTNode>> statements;
     while (!isAtEnd()) {
-        if (match(TokenType::LetKeyword, "let"))
+        if (match(TokenType::LetKeyword))
             statements.push_back(parseVariableDeclaration());
         else if (check(TokenType::Identifier) && checkNext(TokenType::Operator, "="))
             statements.push_back(parseAssignment());
@@ -96,7 +96,11 @@ std::unique_ptr<ProgramNode> Parser::parse() {
 
 
 std::unique_ptr<ASTNode> Parser::parseFunctionOrExpression() {
-    if (check(TokenType::Delimiter, "(")) return parseFunctionCall();
+    if (check(TokenType::Delimiter, "(")) {
+        std::unique_ptr<ExpressionNode> v = parseFunctionCall();
+        expect(TokenType::Delimiter, ";");
+        return v;
+    }
     else return parseExpression();
 }
 
@@ -151,8 +155,13 @@ std::unique_ptr<ExpressionNode> Parser::parsePrimary() {
         return std::make_unique<NumberNode>(std::stoi(previous().value));
     else if (match(TokenType::Double))
         return std::make_unique<NumberNode>(std::stod(previous().value));
-    else if (match(TokenType::Identifier)) 
-        return std::make_unique<VariableNode>(previous().value);
+    else if (match(TokenType::Identifier)) {
+        std::string identifier = previous().value;
+        if (check(TokenType::Delimiter, "(")) {
+            return parseFunctionCall();
+        }
+        return std::make_unique<VariableNode>(identifier);
+    }
     else if (match(TokenType::Delimiter) && previous().value == "(") {
         std::unique_ptr<ExpressionNode> expr = parseExpression();
         expect(TokenType::Delimiter, ")");
@@ -167,12 +176,12 @@ std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration() {
 
     std::optional<std::unique_ptr<ExpressionNode>> initializer;
     if (match(TokenType::Operator, "=")) initializer = parseExpression();
-    expect(TokenType::Delimiter, ";");
+    if (tokens[current-1].value != ";") expect(TokenType::Delimiter, ";");
 
     return std::make_unique<VariableDeclarationNode>(varName, std::move(initializer), mut);
 }
 
-std::unique_ptr<ASTNode> Parser::parseFunctionCall() {
+std::unique_ptr<ExpressionNode> Parser::parseFunctionCall() {
     std::string functionName = previous().value;
     expect(TokenType::Delimiter, "(");
 
@@ -185,8 +194,6 @@ std::unique_ptr<ASTNode> Parser::parseFunctionCall() {
     }
 
     expect(TokenType::Delimiter, ")");
-    expect(TokenType::Delimiter, ";");
-
     return std::make_unique<FunctionCallNode>(functionName, std::move(arguments));
 }
 

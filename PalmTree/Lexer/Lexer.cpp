@@ -1,4 +1,5 @@
 #include "Lexer.h"
+
 #include <iostream>
 #include <iomanip>
 
@@ -11,20 +12,22 @@ temporary way of defining all built-in functions
 (it's not great for more complex functions, but it works for print) ;-) :|
 */
 const std::unordered_map<std::string, 
-	std::function<void(const std::vector<Value>&)>> Lexer::BUILT_IN_FUNCTIONS = {
-	{	"print", [](const std::vector<Value>& args) {
-			for (const auto& val : args) {
-				if (val.isDouble()) {
-					const int count = val.decimalCount();
-					std::cout << std::fixed << std::setprecision(count) << val.asDouble() << " ";
-				}
-				else if (val.isInt()) std::cout << val.asInt() << " ";
+	std::function<Value(const std::vector<Value>&)>> Lexer::BUILT_IN_FUNCTIONS = {
+	{ "print", [](const std::vector<Value>& args) {
+		for (const auto& val : args) {
+			if (val.isDouble()) {
+				const int count = val.decimalCount();
+				std::cout << std::fixed << std::setprecision(count) << val.asDouble() << " ";
 			}
-			std::cout << std::endl;
+			else if (val.isInt()) std::cout << val.asInt() << " ";
 		}
-	}
+		std::cout << std::endl;
+		return Value{};
+	}},
+	{ "PI", [](const std::vector<Value>&) {
+		return Value(3.14159265358979323846);
+	}}
 };
-
 
 std::vector<Token> Lexer::tokenize(const std::string& code)
 {
