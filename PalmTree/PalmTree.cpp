@@ -13,7 +13,9 @@
 
 int main()
 {
-    std::string code = "let x mut = 5 |> double |> increment;\nprint(x);";
+    std::string code = "let add = (x, y) => x + y;\nadd(4, 3);";
+    //std::string code = "let x = 4 + 4;";
+    // let x = 5 |> increment;
     std::vector<Token> tokens = Lexer::tokenize(code);
 
     for (auto& token : tokens) std::cout << token.to_string() << '\n';

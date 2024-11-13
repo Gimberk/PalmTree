@@ -1,20 +1,26 @@
 #pragma once
 
-#include <variant>
-#include <string>
-#include <iostream>
-#include <unordered_map>
+#include <memory>
+#include <optional>
 #include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <variant>
+#include <vector>
+
+class LambdaNode;
 
 class Value {
 public:
-    using VariantType = std::variant<std::monostate, int, double, std::string, bool>;
+    using VariantType =
+        std::variant<std::monostate, int, double, std::string, bool, std::shared_ptr<const LambdaNode>>;
 public:
     Value() : mut(false) { }
     Value(int v) : value(v), mut(false) {}
     Value(double v) : value(v), mut(false) {}
     Value(const std::string& v) : value(v), mut(false) {}
     Value(bool v) : value(v), mut(false) {}
+    Value(std::shared_ptr<const LambdaNode> v) : value(v), mut(false) {}
 
     const VariantType& get() const { return value; }
 public:
@@ -34,15 +40,18 @@ public:
     double asDouble() const { return std::get<double>(value); }
     std::string asString() const { return std::get<std::string>(value); }
     bool asBool() const { return std::get<bool>(value); }
+    std::shared_ptr<const LambdaNode> asLambda() const 
+        { return std::get<std::shared_ptr<const LambdaNode>>(value); }
 
     bool isInt() const { return std::holds_alternative<int>(value); }
     bool isDouble() const { return std::holds_alternative<double>(value); }
     bool isString() const { return std::holds_alternative<std::string>(value); }
     bool isBool() const { return std::holds_alternative<bool>(value); }
     bool isNull() const { return std::holds_alternative<std::monostate>(value); }
-    bool isNumeric() const { 
-        return std::holds_alternative<int>(value) || std::holds_alternative<double>(value); 
+    bool isNumeric() const {
+        return std::holds_alternative<int>(value) || std::holds_alternative<double>(value);
     }
+    bool isLambda() const { return std::holds_alternative<std::shared_ptr<const LambdaNode>>(value); }
 
     void setMutable(const bool mut) { this->mut = mut; }
     bool isMutable() const { return mut; }

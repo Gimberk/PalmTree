@@ -52,6 +52,10 @@ std::vector<Token> Lexer::tokenize(const std::string& code)
 			tokens.push_back({ TokenType::Operator, "|>", static_cast<int>(pos) });
 			pos += 2;
 		}
+		else if (pos != code.length() - 1 && (curr == '=' && code[pos + 1] == '>')) {
+			tokens.push_back({ TokenType::Operator, "=>", static_cast<int>(pos) });
+			pos += 2;
+		}
 		else if (curr == ',') {
 			tokens.push_back({ TokenType::Delimiter, ",", static_cast<int>(pos) });
 			pos++;

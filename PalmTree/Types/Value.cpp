@@ -1,4 +1,4 @@
-#include "Value.h"
+#include "../Parser/AST.h"
 
 int Value::decimalCount() const {
     if (!isDouble()) throw std::runtime_error("Invalid Value Type!");
@@ -26,6 +26,7 @@ std::string Value::to_string() const {
     else if (isDouble()) return std::to_string(asDouble());
     else if (isBool()) return asBool() ? "true" : "false"; // probably not great
     else if (isString()) return asString();
+    return "Unmarked Type";
 }
 
 //

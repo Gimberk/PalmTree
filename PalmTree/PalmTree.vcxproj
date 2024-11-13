@@ -154,11 +154,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer\Lexer.h" />
-    <ClInclude Include="Types\Value.h" />
     <ClInclude Include="Types\Token.h" />
     <ClInclude Include="Parser\Interpreter.h" />
     <ClInclude Include="Parser\Parser.h" />
     <ClInclude Include="Parser\AST.h" />
+    <ClInclude Include="Types\Value.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

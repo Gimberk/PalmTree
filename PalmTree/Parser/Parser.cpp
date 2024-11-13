@@ -19,18 +19,18 @@ bool Parser::checkNext(TokenType type) const {
 }
 
 bool Parser::checkNext(TokenType type, std::string value) const {
-    return !isAtEnd() 
-            && current + 1 < tokens.size() 
-            && tokens[current + 1].type == type 
-            && tokens[current+1].value == value;
+    return !isAtEnd()
+        && current + 1 < tokens.size()
+        && tokens[current + 1].type == type
+        && tokens[current + 1].value == value;
 }
 
 const Token& Parser::expect(TokenType type) {
-    if (isAtEnd()  || tokens[current].type != type) {
+    if (isAtEnd() || tokens[current].type != type) {
         std::cout << (tokens[current].type != type);
-        std::cout << "\nExpected " + tokens[current].tokenTypeToString(type) + 
+        std::cout << "\nExpected " + tokens[current].tokenTypeToString(type) +
             " but got " + tokens[current].tokenTypeToString(tokens[current].type) + "\n";
-        throw std::runtime_error("Expected " + tokens[current].tokenTypeToString(type) + 
+        throw std::runtime_error("Expected " + tokens[current].tokenTypeToString(type) +
             " but got " + tokens[current].tokenTypeToString(type));
     }
     return tokens[current++];
@@ -105,44 +105,65 @@ std::unique_ptr<ASTNode> Parser::parseFunctionOrExpression() {
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseTerm() {
-    if (match(TokenType::Int)) 
+    if (match(TokenType::Int))
         return std::make_unique<NumberNode>(std::stoi(previous().value));
     else if (match(TokenType::Double))
         return std::make_unique<NumberNode>(std::stod(previous().value));
-    else if (match(TokenType::Identifier)) 
+    else if (match(TokenType::Identifier))
         return std::make_unique<VariableNode>(previous().value);
 
     throw std::runtime_error("Expected a term (number or identifier)");
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseExpression() {
-    if (checkNext(TokenType::Operator, "|>")) {
-        std::unique_ptr<ExpressionNode> left = parsePrimary();
-        while (match(TokenType::Operator, "|>")) {
-            if (!check(TokenType::Identifier)) 
-                throw std::runtime_error("Expected function name after '|>' operator");
-            std::string functionName = expect(TokenType::Identifier).value;
-            std::vector<std::unique_ptr<ExpressionNode>> arguments;
-            arguments.push_back(std::move(left));
-
-            if (match(TokenType::Delimiter, "(")) {
-                do {
-                    arguments.push_back(parseExpression());
-                } while (match(TokenType::Delimiter, ","));
-                expect(TokenType::Delimiter, ")");
-            }
-            left = std::make_unique<FunctionCallNode>(functionName, std::move(arguments));
-        }
-        return left;
-    }
+    if (current < tokens.size() - 2 && check(TokenType::Delimiter, "(") && tokens[current + 2].value == ",") 
+        return parseLambdaExpression();
+    else if (checkNext(TokenType::Operator, "|>")) return parsePipeExpression();
     else return parseAdditionSubtraction();
+}
+
+std::unique_ptr<LambdaNode> Parser::parseLambdaExpression() {
+    std::string funcName = tokens[current-2].value;
+    expect(TokenType::Delimiter, "(");
+    std::vector<std::string> arguments;
+
+    if (!check(TokenType::Delimiter, ")")) {
+        do {
+            arguments.push_back(expect(TokenType::Identifier).value);
+        } while (match(TokenType::Delimiter, ","));
+    }
+    expect(TokenType::Delimiter, ")");
+    expect(TokenType::Operator, "=>");
+    std::unique_ptr<ExpressionNode> body = parseExpression();
+
+    return std::make_unique<LambdaNode>(funcName, arguments, std::move(body));
+}
+
+std::unique_ptr<ExpressionNode> Parser::parsePipeExpression() {
+    std::unique_ptr<ExpressionNode> left = parsePrimary();
+    while (match(TokenType::Operator, "|>")) {
+        if (!check(TokenType::Identifier))
+            throw std::runtime_error("Expected function name after '|>' operator");
+        std::string functionName = expect(TokenType::Identifier).value;
+        std::vector<std::unique_ptr<ExpressionNode>> arguments;
+        arguments.push_back(std::move(left));
+
+        if (match(TokenType::Delimiter, "(")) {
+            do {
+                arguments.push_back(parseExpression());
+            } while (match(TokenType::Delimiter, ","));
+            expect(TokenType::Delimiter, ")");
+        }
+        left = std::make_unique<FunctionCallNode>(functionName, std::move(arguments));
+    }
+    return left;
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseAdditionSubtraction() {
     std::unique_ptr<ExpressionNode> left = parseMultiplicationDivision();
 
-    while ( match(TokenType::Operator) 
-            && (previous().value == "+" 
+    while (match(TokenType::Operator)
+        && (previous().value == "+"
             || previous().value == "-")) {
         char op = previous().value[0];
         std::unique_ptr<ExpressionNode> right = parseMultiplicationDivision();
@@ -155,8 +176,8 @@ std::unique_ptr<ExpressionNode> Parser::parseAdditionSubtraction() {
 std::unique_ptr<ExpressionNode> Parser::parseMultiplicationDivision() {
     std::unique_ptr<ExpressionNode> left = parsePrimary();
 
-    bool isOp = match(TokenType::Operator), 
-         isMulOrDiv = previous().value == "*" || previous().value == "/";
+    bool isOp = match(TokenType::Operator),
+        isMulOrDiv = previous().value == "*" || previous().value == "/";
     while (isOp && isMulOrDiv) {
         char op = previous().value[0];
         std::unique_ptr<ExpressionNode> right = parsePrimary();
@@ -195,7 +216,7 @@ std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration() {
 
     std::optional<std::unique_ptr<ExpressionNode>> initializer;
     if (match(TokenType::Operator, "=")) initializer = parseExpression();
-    if (tokens[current-1].value != ";") expect(TokenType::Delimiter, ";");
+    if (tokens[current - 1].value != ";") expect(TokenType::Delimiter, ";");
 
     return std::make_unique<VariableDeclarationNode>(varName, std::move(initializer), mut);
 }

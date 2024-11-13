@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Types/Token.h"
-#include "../Types/Value.h"
+#include "../Parser/AST.h"
 
 #include <functional>
 #include <vector>

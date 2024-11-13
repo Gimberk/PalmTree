@@ -1,7 +1,7 @@
 #pragma once
 
-#include "AST.h"
 #include "../Types/Token.h"
+#include "AST.h"
 
 #include <memory>
 #include <vector>
@@ -42,4 +42,6 @@ private:
 	std::unique_ptr<ASTNode> parseFunctionOrExpression();
 	std::unique_ptr<VariableDeclarationNode> parseVariableDeclaration();
 	std::unique_ptr<AssignmentNode> parseAssignment();
+	std::unique_ptr<ExpressionNode> parsePipeExpression();
+	std::unique_ptr<LambdaNode> parseLambdaExpression();
 };
