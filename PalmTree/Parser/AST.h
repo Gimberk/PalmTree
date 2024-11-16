@@ -196,20 +196,26 @@ public:
 // for expressions like let x = 54;
 struct VariableDeclarationNode : public ASTNode {
     std::string name;
+    std::optional<std::unique_ptr<ExpressionNode>> expression;
+    std::optional<std::shared_ptr<LambdaNode>> lambdaExpr;
     bool mut;
-    std::optional<std::unique_ptr<ExpressionNode>> expression; // Optional initializer
 
     VariableDeclarationNode(const std::string& name,
-        std::optional<std::unique_ptr<ExpressionNode>> expr, bool mut)
-        : name(name), expression(std::move(expr)), mut(mut) {}
+        std::optional<std::unique_ptr<ExpressionNode>> expr, 
+        std::optional<std::shared_ptr<LambdaNode>> lambdaExpr, 
+        bool mut)
+        : name(name), expression(std::move(expr)), lambdaExpr(std::move(lambdaExpr)), mut(mut) {}
 
     Value visit(std::unordered_map<std::string, Value>& variables,
         const std::unordered_map<std::string,
         std::function<Value(const std::vector<Value>&)>>&builtInFunctions) const override {
         if (variables.find(name) != variables.end())
             throw std::runtime_error("Variable with identifier already exists!");
-        Value value = expression == nullptr
-            ? Value() : (*expression)->evaluate(variables, builtInFunctions);
+        Value value;
+        if (expression == nullptr && lambdaExpr == nullptr) value = Value();
+        else if (expression != nullptr && lambdaExpr == nullptr)
+            value = (*expression)->evaluate(variables, builtInFunctions);
+        else value = Value((*lambdaExpr));
         value.setMutable(mut);
         variables[name] = value;
         return value;

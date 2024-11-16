@@ -214,11 +214,12 @@ std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration() {
     const std::string varName = expect(TokenType::Identifier).value;
     const bool mut = match(TokenType::MutableKeyword);
 
-    std::optional<std::unique_ptr<ExpressionNode>> initializer;
-    if (match(TokenType::Operator, "=")) initializer = parseExpression();
+    std::optional<std::unique_ptr<ExpressionNode>> expr;
+    std::optional<std::shared_ptr<LambdaNode>> lambdaExpr;
+    if (match(TokenType::Operator, "=")) expr = parseExpression();
     if (tokens[current - 1].value != ";") expect(TokenType::Delimiter, ";");
 
-    return std::make_unique<VariableDeclarationNode>(varName, std::move(initializer), mut);
+    return std::make_unique<VariableDeclarationNode>(varName, std::move(expr), mut);
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseFunctionCall() {
