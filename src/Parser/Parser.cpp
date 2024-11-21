@@ -49,6 +49,7 @@ const Token& Parser::expect(TokenType type, const std::string& value) {
                      " but got " +
                      tokens[current].tokenTypeToString(tokens[current].type) +
                      "\n";
+    std::cout << current << '\n';
     throw std::runtime_error(
         "Expected " + tokens[current].tokenTypeToString(type) + " but got " +
         tokens[current].tokenTypeToString(type));
@@ -186,6 +187,15 @@ std::unique_ptr<ExpressionNode> Parser::parseAdditionSubtraction() {
   return left;
 }
 
+std::unique_ptr<ExpressionNode> Parser::parseUnary() {
+  if (match(TokenType::Operator, "-"))
+    return std::make_unique<UnaryOperationNode>('-', std::move(parseUnary()));
+  else if (match(TokenType::Operator, "+"))
+    return parseUnary();
+  else
+    return parsePrimary();
+}
+
 std::unique_ptr<ExpressionNode> Parser::parseMultiplicationDivision() {
   std::unique_ptr<ExpressionNode> left = parsePrimary();
 
@@ -193,7 +203,7 @@ std::unique_ptr<ExpressionNode> Parser::parseMultiplicationDivision() {
        isMulOrDiv = previous().value == "*" || previous().value == "/";
   while (isOp && isMulOrDiv) {
     char op = previous().value[0];
-    std::unique_ptr<ExpressionNode> right = parsePrimary();
+    std::unique_ptr<ExpressionNode> right = parseUnary();
     left = std::make_unique<BinaryOperationNode>(std::move(left), op,
                                                  std::move(right));
 
@@ -211,11 +221,9 @@ std::unique_ptr<ExpressionNode> Parser::parsePrimary() {
     return std::make_unique<NumberNode>(std::stod(previous().value));
   else if (match(TokenType::Identifier)) {
     std::string identifier = previous().value;
-    if (check(TokenType::Delimiter, "(")) {
-      return parseFunctionCall();
-    }
+    if (check(TokenType::Delimiter, "(")) return parseFunctionCall();
     return std::make_unique<VariableNode>(identifier);
-  } else if (match(TokenType::Delimiter) && previous().value == "(") {
+  } else if (match(TokenType::Delimiter, "(")) {
     std::unique_ptr<ExpressionNode> expr = parseExpression();
     expect(TokenType::Delimiter, ")");
     return expr;

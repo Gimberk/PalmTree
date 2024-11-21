@@ -293,12 +293,10 @@ struct FunctionCallNode : public ExpressionNode {
 
     // for lambda functions
     for (auto& var : variables) {
-      std::cout << var.first << '\n';
-      std::cout << var.second.isLambda() << '\n';
-      if (functionName != var.first || !var.second.isLambda()) continue;
       auto lambda = var.second.asLambda();
       // this means that a global var already exists with the same name as the
       // arg
+      if (functionName != var.first || !var.second.isLambda()) continue;
       for (std::string arg : lambda->arguments)
         if (variables.find(arg) != variables.end())
           throw std::runtime_error("Variable with identifier already exists!");
@@ -326,5 +324,39 @@ struct FunctionCallNode : public ExpressionNode {
     str.pop_back();
     str += ")";
     return str;
+  }
+};
+
+struct UnaryOperationNode : public ExpressionNode {
+ private:
+  char op;  // The unary operator ('-' or '+')
+  std::unique_ptr<ExpressionNode> operand;
+
+ public:
+  UnaryOperationNode(char op, std::unique_ptr<ExpressionNode> operand)
+      : op(op), operand(std::move(operand)) {}
+
+  Value visit(std::unordered_map<std::string, Value>& variables,
+              const std::unordered_map<
+                  std::string, std::function<Value(const std::vector<Value>&)>>&
+                  builtInFunctions) const override {
+    /* Doesn't do anything right now */
+    return Value();
+  }
+
+  Value evaluate(
+      std::unordered_map<std::string, Value>& variables,
+      const std::unordered_map<std::string,
+                               std::function<Value(const std::vector<Value>&)>>&
+          builtInFunctions) const override {
+    Value value = operand->evaluate(variables, builtInFunctions);
+    if (op == '-')
+      return Value(-value.asDouble());  // Negate the value
+    else
+      return value;  // '+' does nothing
+  }
+
+  std::string to_string(int indent = 0) const override {
+    return "Unary Operation";
   }
 };
