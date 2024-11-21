@@ -1,3 +1,0 @@
-/home/james/PalmTree/build/CMakeFiles/Project.dir
-/home/james/PalmTree/build/CMakeFiles/edit_cache.dir
-/home/james/PalmTree/build/CMakeFiles/rebuild_cache.dir

@@ -1,1 +1,0 @@
-/usr/bin/c++ -w -g CMakeFiles/Project.dir/src/Lexer/Lexer.cpp.o CMakeFiles/Project.dir/src/PalmTree.cpp.o CMakeFiles/Project.dir/src/Parser/Parser.cpp.o CMakeFiles/Project.dir/src/Types/Value.cpp.o -o Project 
