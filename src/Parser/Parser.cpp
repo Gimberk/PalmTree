@@ -129,10 +129,28 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm() {
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseExpression() {
-  if (checkNext(TokenType::Operator, "|>"))
-    return parsePipeExpression();
-  else
-    return parseAdditionSubtraction();
+  auto left = parseAdditionSubtraction();
+
+  while (match(TokenType::Operator, "|>")) {
+    if (!check(TokenType::Identifier))
+      throw std::runtime_error("Expected function name after '|>' operator");
+    std::string functionName = expect(TokenType::Identifier).value;
+
+    std::vector<std::unique_ptr<ExpressionNode>> arguments;
+    arguments.push_back(std::move(left));
+
+    if (match(TokenType::Delimiter, "(")) {
+      do {
+        arguments.push_back(parseExpression());
+      } while (match(TokenType::Delimiter, ","));
+      expect(TokenType::Delimiter, ")");
+    }
+
+    left =
+        std::make_unique<FunctionCallNode>(functionName, std::move(arguments));
+  }
+
+  return left;
 }
 
 std::unique_ptr<LambdaNode> Parser::parseLambdaExpression() {
@@ -153,51 +171,55 @@ std::unique_ptr<LambdaNode> Parser::parseLambdaExpression() {
 }
 
 std::unique_ptr<ExpressionNode> Parser::parsePipeExpression() {
-  std::unique_ptr<ExpressionNode> left = parsePrimary();
+  auto left = parseUnary();
+
   while (match(TokenType::Operator, "|>")) {
-    if (!check(TokenType::Identifier))
+    if (!check(TokenType::Identifier)) {
       throw std::runtime_error("Expected function name after '|>' operator");
+    }
     std::string functionName = expect(TokenType::Identifier).value;
     std::vector<std::unique_ptr<ExpressionNode>> arguments;
     arguments.push_back(std::move(left));
-
     if (match(TokenType::Delimiter, "(")) {
       do {
-        arguments.push_back(parseExpression());
       } while (match(TokenType::Delimiter, ","));
       expect(TokenType::Delimiter, ")");
     }
     left =
         std::make_unique<FunctionCallNode>(functionName, std::move(arguments));
   }
+
   return left;
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseAdditionSubtraction() {
   std::unique_ptr<ExpressionNode> left = parseMultiplicationDivision();
 
-  while (match(TokenType::Operator) &&
-         (previous().value == "+" || previous().value == "-")) {
+  bool isOp = match(TokenType::Operator),
+       isAddOrSub = previous().value == "*" || previous().value == "/";
+  while (isOp && isAddOrSub) {
     char op = previous().value[0];
     std::unique_ptr<ExpressionNode> right = parseMultiplicationDivision();
     left = std::make_unique<BinaryOperationNode>(std::move(left), op,
                                                  std::move(right));
   }
-
+  if (isOp && !isAddOrSub) current--;
   return left;
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseUnary() {
-  if (match(TokenType::Operator, "-"))
-    return std::make_unique<UnaryOperationNode>('-', std::move(parseUnary()));
-  else if (match(TokenType::Operator, "+"))
+  if (match(TokenType::Operator, "-")) {
+    auto operand = parseUnary();
+    // current++;
+    return std::make_unique<UnaryOperationNode>('-', std::move(operand));
+  } else if (match(TokenType::Operator, "+"))
     return parseUnary();
   else
     return parsePrimary();
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseMultiplicationDivision() {
-  std::unique_ptr<ExpressionNode> left = parsePrimary();
+  std::unique_ptr<ExpressionNode> left = parseUnary();
 
   bool isOp = match(TokenType::Operator),
        isMulOrDiv = previous().value == "*" || previous().value == "/";

@@ -38,6 +38,14 @@ const std::unordered_map<std::string,
            return args[0].isInt() ? Value{args[0].asInt() * 2}
                                   : Value{args[0].asDouble() * 2};
          }},
+        {"decrement",
+         [](const std::vector<Value>& args) {
+           if (args.size() != 1 || !args[0].isNumeric())
+             throw std::runtime_error(
+                 "decrement expects a single numeric argument");
+           return args[0].isInt() ? Value(args[0].asInt() - 1)
+                                  : Value(args[0].asDouble() - 1);
+         }},
         {"increment", [](const std::vector<Value>& args) {
            if (args.size() != 1 || !args[0].isNumeric())
              throw std::runtime_error(

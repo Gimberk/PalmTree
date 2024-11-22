@@ -49,16 +49,13 @@ class Value {
     return std::get<std::shared_ptr<const LambdaNode>>(value);
   }
 
-  bool isNumber() const { return isInt() || isDouble(); }
+  bool isNumeric() const { return isInt() || isDouble(); }
   bool isInt() const { return std::holds_alternative<int>(value); }
   bool isDouble() const { return std::holds_alternative<double>(value); }
   bool isString() const { return std::holds_alternative<std::string>(value); }
   bool isBool() const { return std::holds_alternative<bool>(value); }
   bool isNull() const { return std::holds_alternative<std::monostate>(value); }
-  bool isNumeric() const {
-    return std::holds_alternative<int>(value) ||
-           std::holds_alternative<double>(value);
-  }
+
   bool isLambda() const {
     return std::holds_alternative<std::shared_ptr<const LambdaNode>>(value);
   }

@@ -350,10 +350,15 @@ struct UnaryOperationNode : public ExpressionNode {
                                std::function<Value(const std::vector<Value>&)>>&
           builtInFunctions) const override {
     Value value = operand->evaluate(variables, builtInFunctions);
-    if (op == '-')
-      return Value(-value.asDouble());  // Negate the value
-    else
-      return value;  // '+' does nothing
+    if (!value.isNumeric()) throw std::runtime_error("Invalid Unary Operand");
+    if (op == '-') {
+      if (value.isInt())
+        return Value(-value.asInt());
+      else if (value.isDouble())
+        return Value(-value.asDouble());
+    } else
+      return value;
+    throw std::runtime_error("Add support for additional numeric types!");
   }
 
   std::string to_string(int indent = 0) const override {

@@ -12,9 +12,9 @@
 */
 
 int main() {
-  // std::string code = "print(-5 |> increment |> double);";
+  std::string code = "print(--5 |> decrement |> double);";
   //  std::string code = "let x = 4 + 4;";
-  std::string code = "let x = 5 |> increment; print(x);";
+  //  std::string code = "let x = 5 |> increment; print(x);";
   std::vector<Token> tokens = Lexer::tokenize(code);
 
   for (auto& token : tokens) std::cout << token.to_string() << '\n';
