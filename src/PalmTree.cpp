@@ -12,7 +12,9 @@
 */
 
 int main() {
-  std::string code = "print(--5 |> decrement |> double);";
+  std::string code =
+      "let a = () => 4; print(a());";  // doesn't allow for sub 2 argument
+                                       // definitions cuz bad
   //  std::string code = "let x = 4 + 4;";
   //  std::string code = "let x = 5 |> increment; print(x);";
   std::vector<Token> tokens = Lexer::tokenize(code);
